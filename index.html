@@ -203,6 +203,30 @@ body{overflow:hidden}
   background:linear-gradient(to bottom,var(--bg) 0%,var(--bg) 55%,color-mix(in srgb,var(--bg) 85%,transparent) 72%,color-mix(in srgb,var(--bg) 0%,transparent) 100%);
   opacity:0;transition:opacity .25s ease}
 .veil.on{opacity:1}
+
+/* Pas d'ascenseur visible */
+.pane{scrollbar-width:none}.pane::-webkit-scrollbar{display:none}
+/* Cartes sans schéma, aperçu au maintien */
+.ex{grid-template-columns:minmax(0,1fr);-webkit-touch-callout:none;-webkit-user-select:none;user-select:none;
+  transition:transform .25s cubic-bezier(.2,.8,.2,1);border-radius:18px}
+.ex.holding{transform:scale(.975)}
+.hint{font-size:12.5px;color:var(--muted);display:flex;align-items:center;gap:8px}
+.hint::before{content:"";width:14px;height:14px;border-radius:50%;border:1.5px solid var(--accent);box-sizing:border-box}
+.peek{position:fixed;inset:0;z-index:20;display:grid;place-items:center;padding:24px;
+  background:rgba(235,235,235,.55);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);animation:pkIn .2s ease-out}
+.peek.out{animation:pkOut .16s ease-in forwards}
+.pcard{width:min(340px,100%);background:var(--surface);border-radius:28px;padding:14px 14px 18px;display:flex;flex-direction:column;gap:12px;
+  box-shadow:0 24px 60px rgba(0,0,0,.18);transform-origin:var(--ox,50%) var(--oy,50%);animation:pcIn .32s cubic-bezier(.2,.9,.25,1.15)}
+.peek.out .pcard{animation:pcOut .16s ease-in forwards}
+.pfig{background:var(--panel);border-radius:20px;aspect-ratio:6/5}
+.pfig svg{display:block;width:100%;height:100%}
+.pname{font-size:22px;font-weight:500;letter-spacing:-.03em;line-height:1.1;padding-inline:6px}
+.pcard .legend{padding-inline:6px}
+@keyframes pkIn{from{opacity:0}to{opacity:1}}
+@keyframes pkOut{to{opacity:0}}
+@keyframes pcIn{from{transform:scale(.6);opacity:0}to{transform:scale(1);opacity:1}}
+@keyframes pcOut{to{transform:scale(.85);opacity:0}}
+@media (prefers-reduced-motion:reduce){.peek,.pcard,.peek.out,.peek.out .pcard{animation:none}}
 </style>
 
 <div class="app">
@@ -251,6 +275,7 @@ body{overflow:hidden}
   </section>
 </div>
 
+<div class="peek" id="peek" hidden aria-hidden="true"><div class="pcard" id="pcard"><div class="pfig" id="pfig"></div><div class="pname" id="pname"></div><div class="legend"><span><i class="lg"></i>Départ</span><span><i class="la"></i>Arrivée</span></div></div></div>
 <div class="timer" id="timer" hidden>
   <div class="bar" id="tbar"></div>
   <div class="in">
@@ -501,7 +526,7 @@ function renderDay(D){
   D.blocks.forEach(function(b){b.ex.forEach(function(x){total+=x[1]})});
   o+='<div class="dayhead"><div class="eyebrow">'+D.day+'</div><h2>'+D.name+'</h2><div class="focus">'+D.focus+'</div>';
   o+='<div class="stats"><div class="stat"><span class="big">'+total+'</span><span class="cap">séries</span></div><div class="stat"><span class="big">65</span><span class="cap">minutes<br>environ</span></div></div>';
-  o+='<div class="legend"><span><i class="lg"></i>Départ</span><span><i class="la"></i>Arrivée</span></div></div>';
+  o+='<div class="hint">Maintiens un exercice pour voir le mouvement</div></div>';
   o+='<div class="blocks">';
   D.blocks.forEach(function(b,i){
     var n=i+1,sup=b.ex.length>1,sets=b.ex[0][1],id=D.id+'-'+i,done=prog.c[id]||0;
@@ -510,11 +535,11 @@ function renderDay(D){
     else o+='<div class="bhead"><span class="btag">Exercice '+n+'</span><span class="how">Repos <b>'+fmtRest(b.rest)+'</b> entre les séries</span></div>';
     b.ex.forEach(function(x,j){
       var e=E[x[0]],num=sup?n+(j?'B':'A'):String(n),unit=x[3]||'reps';
-      o+='<div class="ex"><div class="info">';
+      o+='<div class="ex" data-fig="'+e.fig+'" data-name="'+e.n+'"><div class="info">';
       o+='<span class="num">'+num+'</span><div class="ttl"><h3>'+e.n+'</h3></div>';
       if(e.sub)o+='<div class="sub">'+e.sub+'</div>';
       o+='<div class="dose"><b>'+x[1]+' × '+x[2].replace('-',' à ')+'</b><span>'+unit+'</span></div>';
-      o+='<p class="cue">'+e.cue+'</p><div class="mus">'+e.mus+'</div></div><div class="fig">'+figSvg(e.fig,e.n)+'</div></div>';
+      o+='<p class="cue">'+e.cue+'</p><div class="mus">'+e.mus+'</div></div></div>';
     });
     o+='<div class="bfoot"><div class="sets">';
     for(var s=0;s<sets;s++)o+='<button type="button" class="set" data-block="'+id+'" data-i="'+s+'" data-rest="'+b.rest+'" aria-pressed="'+(s<done)+'" aria-label="'+(sup?'Tour ':'Série ')+(s+1)+'">'+(s+1)+'</button>';
@@ -633,6 +658,43 @@ pager.addEventListener('click',function(ev){
 });
 goTo(pageIndex(pickDefault()),false);
 requestAnimationFrame(function(){goTo(cur,false)});
+
+/* ---------- Aperçu au maintien (comme Instagram) ---------- */
+(function(){
+  var peek=document.getElementById('peek'),pcard=document.getElementById('pcard'),pfig=document.getElementById('pfig'),pname=document.getElementById('pname');
+  var timer=null,target=null,sx=0,sy=0,open=false,outTo=null;
+  function cancel(){clearTimeout(timer);timer=null;if(target)target.classList.remove('holding');target=null}
+  function show(){
+    var ex=target;if(!ex)return;
+    clearTimeout(outTo);peek.classList.remove('out');
+    pfig.innerHTML=figSvg(ex.dataset.fig,ex.dataset.name);pname.textContent=ex.dataset.name;
+    peek.hidden=false;open=true;
+    var r=pcard.getBoundingClientRect();
+    pcard.style.setProperty('--ox',(sx-r.left)+'px');pcard.style.setProperty('--oy',(sy-r.top)+'px');
+    pcard.style.animation='none';void pcard.offsetWidth;pcard.style.animation='';
+    try{if(navigator.vibrate)navigator.vibrate(12)}catch(e){}
+  }
+  function close(){
+    if(!open)return;open=false;
+    peek.classList.add('out');
+    outTo=setTimeout(function(){peek.hidden=true;peek.classList.remove('out')},160);
+  }
+  pager.addEventListener('pointerdown',function(e){
+    var ex=e.target.closest('.ex');if(!ex||e.button>0)return;
+    target=ex;sx=e.clientX;sy=e.clientY;ex.classList.add('holding');
+    timer=setTimeout(function(){timer=null;show()},380);
+  });
+  document.addEventListener('pointermove',function(e){
+    if(timer&&(Math.abs(e.clientX-sx)>8||Math.abs(e.clientY-sy)>8))cancel();
+  },{passive:true});
+  function end(){cancel();close()}
+  document.addEventListener('pointerup',end);
+  document.addEventListener('pointercancel',function(){if(!open)cancel()});
+  document.addEventListener('touchend',end,{passive:true});
+  document.addEventListener('touchmove',function(e){if(open)e.preventDefault()},{passive:false});
+  pager.addEventListener('contextmenu',function(e){if(e.target.closest('.ex'))e.preventDefault()});
+  peek.addEventListener('click',end);
+})();
 </script>
 
 </body>
