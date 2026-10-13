@@ -227,6 +227,10 @@ body{overflow:hidden}
 @keyframes pcIn{from{transform:scale(.6);opacity:0}to{transform:scale(1);opacity:1}}
 @keyframes pcOut{to{transform:scale(.85);opacity:0}}
 @media (prefers-reduced-motion:reduce){.peek,.pcard,.peek.out,.peek.out .pcard{animation:none}}
+
+/* Aucune sélection de texte ni menu contextuel sur appui long */
+html,body,.app,.peek,.peek *{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;-webkit-tap-highlight-color:transparent}
+.pcard{pointer-events:none}
 </style>
 
 <div class="app">
@@ -668,6 +672,7 @@ requestAnimationFrame(function(){goTo(cur,false)});
     var ex=target;if(!ex)return;
     clearTimeout(outTo);peek.classList.remove('out');
     pfig.innerHTML=figSvg(ex.dataset.fig,ex.dataset.name);pname.textContent=ex.dataset.name;
+    try{var sel=window.getSelection();if(sel)sel.removeAllRanges()}catch(e){}
     peek.hidden=false;open=true;
     var r=pcard.getBoundingClientRect();
     pcard.style.setProperty('--ox',(sx-r.left)+'px');pcard.style.setProperty('--oy',(sy-r.top)+'px');
@@ -692,7 +697,8 @@ requestAnimationFrame(function(){goTo(cur,false)});
   document.addEventListener('pointercancel',function(){if(!open)cancel()});
   document.addEventListener('touchend',end,{passive:true});
   document.addEventListener('touchmove',function(e){if(open)e.preventDefault()},{passive:false});
-  pager.addEventListener('contextmenu',function(e){if(e.target.closest('.ex'))e.preventDefault()});
+  document.addEventListener('contextmenu',function(e){e.preventDefault()});
+  document.addEventListener('selectstart',function(e){e.preventDefault()});
   peek.addEventListener('click',end);
 })();
 </script>
