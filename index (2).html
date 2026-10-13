@@ -1,0 +1,701 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#EBEBEB">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<style>html,body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
+</head>
+<body>
+<title>Programme Push Pull 4 jours</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@200;300;400;500;600&display=swap">
+<style>
+/* Layout : grandes typos fines, cartes blanches très arrondies sur fond gris clair, pilules noires, un seul accent orange.
+   Version claire uniquement. */
+:root{
+  --bg:#EBEBEB; --surface:#FFFFFF; --ink:#111111; --muted:#8C8C8C; --soft:#4A4A4A; --line:#E7E7E7;
+  --panel:#F3F3F3; --equip:#BDBDBD; --accent:#EE6B3B; --on-accent:#FFFFFF; --ghost:#F7C9B6;
+  --sans:"Hanken Grotesk","Helvetica Neue",Helvetica,Arial,sans-serif;
+  color-scheme:light;
+}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:16px;line-height:1.45;
+  --ghost:color-mix(in srgb,var(--accent) 30%,var(--panel))}
+.wrap{max-width:680px;margin-inline:auto;padding-inline:16px;padding-block:28px 130px;display:flex;flex-direction:column;gap:22px}
+h1,h2,h3,p{margin:0}
+button{font:inherit;color:inherit;cursor:pointer}
+button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+.intro{display:flex;flex-direction:column;gap:14px;padding-inline:4px}
+.intro h1{font-weight:400;font-size:60px;line-height:.95;letter-spacing:-.045em}
+.stat{display:flex;align-items:flex-end;gap:10px}
+.stat .big{font-weight:200;font-size:78px;line-height:.8;letter-spacing:-.05em;color:var(--accent);font-variant-numeric:tabular-nums}
+.stat .cap{font-size:12px;line-height:1.2;color:var(--accent);padding-bottom:4px}
+.intro p{color:var(--soft);max-width:46ch;font-size:15px}
+
+/* Navigation en pilules */
+.week{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--bg);padding-block:10px;
+  display:flex;gap:6px;overflow-x:auto;scrollbar-width:none}
+.week::-webkit-scrollbar{display:none}
+.wk{flex:none;display:flex;align-items:center;gap:7px;padding:10px 15px;border-radius:999px;border:0;background:var(--surface);
+  font-size:14px;font-weight:500;letter-spacing:-.01em;white-space:nowrap}
+.wk .d{color:var(--muted);font-weight:400}
+.wk[aria-selected="true"]{background:var(--ink);color:var(--surface)}
+.wk[aria-selected="true"] .d{color:#9A9A9A}
+.wk[aria-selected="true"]::after{content:"";width:7px;height:7px;border-radius:50%;background:var(--accent)}
+
+/* Séance */
+.dayhead{display:flex;flex-direction:column;gap:10px;padding-inline:4px}
+.eyebrow{font-size:13px;color:var(--muted)}
+.dayhead h2{font-weight:400;font-size:52px;line-height:.95;letter-spacing:-.045em}
+.dayhead .focus{font-size:17px;color:var(--muted);letter-spacing:-.01em}
+.dayhead .stats{display:flex;gap:26px;align-items:flex-end;margin-top:4px}
+.legend{display:flex;gap:14px;font-size:12.5px;color:var(--muted);align-items:center}
+.legend i{display:inline-block;width:14px;height:4px;border-radius:2px;margin-right:6px;vertical-align:middle}
+.legend .lg{background:var(--ghost)} .legend .la{background:var(--ink)}
+.blocks{display:flex;flex-direction:column;gap:10px}
+
+.block{background:var(--surface);border-radius:26px;padding:6px 0}
+.bhead{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:6px 10px;padding:12px 18px 2px}
+.btag{font-size:12.5px;color:var(--muted);line-height:1.2}
+.block.sup .btag{color:var(--ink)}
+.block.sup .btag::before{content:"";display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--accent);margin-right:7px;vertical-align:1px}
+.how{font-size:12.5px;color:var(--muted)}
+.how b{color:var(--ink);font-weight:500}
+
+.ex{display:grid;grid-template-columns:minmax(0,1fr) 108px;gap:14px;padding:12px 18px;align-items:start}
+.ex + .ex{border-top:1px solid var(--line)}
+.fig{background:var(--panel);border-radius:18px;aspect-ratio:6/5;max-width:100%}
+.fig svg{display:block;width:100%;height:100%}
+.info{display:flex;flex-direction:column;gap:5px;min-width:0}
+.num{font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums}
+.ttl h3{font-size:21px;font-weight:500;line-height:1.08;letter-spacing:-.03em;text-wrap:balance}
+.sub{font-size:12.5px;color:var(--muted)}
+.dose{display:flex;align-items:baseline;gap:6px;flex-wrap:wrap;margin-top:4px}
+.dose b{font-weight:300;font-size:32px;line-height:1;letter-spacing:-.04em;font-variant-numeric:tabular-nums}
+.dose span{font-size:12.5px;color:var(--muted)}
+.cue{font-size:14px;line-height:1.45;color:var(--soft)}
+.mus{font-size:12px;color:var(--accent)}
+
+.bfoot{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px;padding:10px 18px 12px}
+.sets{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.set{width:34px;height:34px;border-radius:50%;border:1px solid var(--line);background:var(--surface);
+  font-size:14px;font-weight:500;font-variant-numeric:tabular-nums;padding:0;color:var(--muted)}
+.set[aria-pressed="true"]{background:var(--ink);border-color:var(--ink);color:var(--surface)}
+.restbtn{display:inline-flex;align-items:center;gap:8px;font-size:13.5px;font-weight:500;padding:9px 16px;border-radius:999px;border:0;
+  background:var(--ink);color:var(--surface);white-space:nowrap;font-variant-numeric:tabular-nums}
+.restbtn::before{content:"";width:7px;height:7px;border-radius:50%;background:var(--accent)}
+
+/* Schémas */
+.bd{fill:none;stroke-width:4.2;stroke-linecap:round;stroke-linejoin:round}
+.bG{stroke:var(--ghost)} .bA{stroke:var(--ink)}
+.hG{fill:var(--ghost);stroke:none} .hA{fill:var(--ink);stroke:none}
+.eq{stroke:var(--equip);fill:none;stroke-width:1.8;stroke-linecap:round}
+.eqL{stroke:var(--equip);fill:none;stroke-width:3.4;stroke-linecap:round}
+.eqr{fill:var(--equip);stroke:none;opacity:.45}
+.gr{stroke:#E2E2E2;fill:none;stroke-width:1.4;stroke-linecap:round}
+.gw{fill:none;stroke-width:4.6;stroke-linecap:round}
+.gl{fill:none;stroke-width:1.4;stroke-linecap:round}
+.go{fill:none;stroke-width:2.2}
+.gf{stroke:none}
+.gG.gw,.gG.gl,.gG.go{stroke:var(--ghost)} .gG.gf{fill:var(--ghost)}
+.gA.gw,.gA.gl,.gA.go{stroke:var(--accent)} .gA.gf{fill:var(--accent)}
+
+/* Bas de page */
+.sec{display:flex;flex-direction:column;gap:12px}
+.sec h2{font-weight:400;font-size:52px;line-height:.95;letter-spacing:-.045em}
+.tw{overflow-x:auto;background:var(--surface);border-radius:26px;padding:6px 4px}
+table{border-collapse:collapse;width:100%;font-size:14px}
+th,td{text-align:left;padding:10px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+tr:last-child td{border-bottom:0}
+th{font-size:12px;font-weight:400;color:var(--muted);white-space:nowrap}
+td{color:var(--soft)}
+td.n{font-weight:300;font-size:22px;letter-spacing:-.03em;color:var(--ink);font-variant-numeric:tabular-nums;white-space:nowrap;line-height:1.1}
+td.k{font-weight:500;color:var(--ink)}
+td.m{color:var(--muted);white-space:nowrap}
+.pill{display:inline-block;font-size:12px;padding:3px 10px;border-radius:999px;background:var(--panel);color:var(--muted);white-space:nowrap}
+.pill.p{background:var(--accent);color:var(--on-accent)}
+
+/* Minuteur flottant */
+.timer{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(14px + env(safe-area-inset-bottom,0px));z-index:10;
+  width:min(380px,calc(100% - 32px));background:var(--ink);color:var(--surface);border-radius:999px;padding:10px 10px 10px 24px;overflow:hidden;
+  box-shadow:0 10px 30px rgba(0,0,0,.18)}
+.timer .in{display:flex;align-items:center;gap:12px}
+.timer .tc{display:flex;flex-direction:column;flex:1;min-width:0}
+.timer .tl{font-size:11.5px;color:#9A9A9A}
+.timer .tt{font-weight:300;font-size:34px;line-height:1;letter-spacing:-.04em;font-variant-numeric:tabular-nums}
+.timer .tb{display:flex;gap:6px}
+.timer button{font-size:13.5px;font-weight:500;padding:10px 15px;border-radius:999px;border:0;background:#2A2A2A;color:var(--surface);white-space:nowrap}
+.timer .bar{position:absolute;left:0;bottom:0;height:3px;width:100%;background:var(--accent);transform-origin:left center}
+.timer.done{background:var(--accent)}
+.timer.done .tl{color:var(--on-accent)}
+.timer.done button{background:rgba(255,255,255,.22)}
+.timer.done .bar{display:none}
+
+@media (min-width:620px){
+  .ex{grid-template-columns:minmax(0,1fr) 150px;gap:20px}
+  .intro h1{font-size:76px}
+  .dayhead h2{font-size:64px}
+}
+@media (max-width:370px){
+  .ex{grid-template-columns:minmax(0,1fr) 90px;gap:11px}
+  .intro h1{font-size:50px}
+}
+@media (prefers-reduced-motion:no-preference){
+  .set,.restbtn,.wk{transition:background-color .15s,color .15s,border-color .15s}
+}
+
+.wrap{padding-block:8px 130px}
+.page{touch-action:pan-y}
+@keyframes inR{from{opacity:.2;transform:translateX(36px)}to{opacity:1;transform:none}}
+@keyframes inL{from{opacity:.2;transform:translateX(-36px)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion:no-preference){.page.inR{animation:inR .26s ease-out}.page.inL{animation:inL .26s ease-out}}
+.hint{font-size:12px;color:var(--muted);text-align:center;padding-top:6px}
+
+/* Pager : pages côte à côte, le contenu suit le pouce, aimantation native */
+html,body{height:100%}
+body{overflow:hidden}
+.app{position:fixed;inset:0;display:flex;flex-direction:column;padding-top:env(safe-area-inset-top,0px);background:var(--bg)}
+.week{position:relative;top:auto;flex:none;display:block;overflow-x:auto;padding:12px 16px 8px;background:var(--bg);scrollbar-width:none}
+.track{position:relative;display:flex;gap:2px;width:max-content;background:var(--surface);border-radius:999px;padding:4px}
+.ind{position:absolute;top:4px;bottom:4px;left:0;width:0;border-radius:999px;background:var(--ink);will-change:transform,width;z-index:0;pointer-events:none}
+.ind::after{content:"";position:absolute;right:11px;top:50%;width:6px;height:6px;margin-top:-3px;border-radius:50%;background:var(--accent);opacity:var(--dot,1)}
+.wk{position:relative;z-index:1;background:transparent;padding:9px 24px 9px 15px;transition:color .2s ease,transform .18s cubic-bezier(.2,.8,.2,1)}
+.wk[aria-selected="true"]{background:transparent;color:var(--ink)}
+.wk[aria-selected="true"] .d{color:var(--muted)}
+.lay{position:absolute;inset:0;display:flex;gap:2px;padding:4px;pointer-events:none;z-index:2;will-change:clip-path}
+.lay .wk,.lay .wk[aria-selected="true"]{color:var(--surface)}
+.lay .wk .d,.lay .wk[aria-selected="true"] .d{color:#9A9A9A}
+.wk[aria-selected="true"]::after{display:none}
+.wk .d{transition:color .2s ease}
+.wk:active{transform:scale(.94)}
+.pager{flex:1;min-height:0;display:flex;overflow-x:auto;overflow-y:hidden;scroll-snap-type:x mandatory;overscroll-behavior-x:contain;scrollbar-width:none}
+.pager::-webkit-scrollbar{display:none}
+.pane{flex:0 0 100%;width:100%;height:100%;overflow-y:auto;overscroll-behavior-y:contain;scroll-snap-align:start;scroll-snap-stop:always}
+.inner{max-width:680px;margin-inline:auto;padding-inline:16px;padding-block:10px 130px;display:flex;flex-direction:column;gap:22px;transform-origin:50% 120px;will-change:transform,opacity}
+.set,.restbtn{transition:background-color .2s,color .2s,border-color .2s,transform .18s cubic-bezier(.2,.8,.2,1)}
+.set:active{transform:scale(.88)} .restbtn:active{transform:scale(.95)}
+.set.pop{animation:pop .32s cubic-bezier(.2,.8,.2,1)}
+@keyframes pop{0%{transform:scale(.85)}60%{transform:scale(1.12)}100%{transform:scale(1)}}
+.timer{animation:tup .38s cubic-bezier(.2,.8,.2,1)}
+@keyframes tup{from{transform:translate(-50%,140%);opacity:0}to{transform:translate(-50%,0);opacity:1}}
+.timer .bar{transition:transform .2s linear}
+@media (prefers-reduced-motion:reduce){.inner{transform:none!important;opacity:1!important}.timer,.set.pop{animation:none}}
+
+/* Menu flottant en verre, flou progressif derrière */
+.app{padding-top:0}
+.week{position:absolute;top:0;left:0;right:0;z-index:6;background:transparent;padding:calc(env(safe-area-inset-top,0px) + 12px) 16px 10px}
+.inner{padding-top:calc(env(safe-area-inset-top,0px) + 80px)}
+.track{background:var(--surface);-webkit-backdrop-filter:none;backdrop-filter:none;border:0;box-shadow:none}
+.week{display:flex;gap:8px;align-items:stretch;overflow:visible}
+.scroller{flex:1;min-width:0;overflow-x:auto;scrollbar-width:none;border-radius:999px}
+.scroller::-webkit-scrollbar{display:none}
+.mark{flex:none;display:grid;place-items:center;padding:0 4px 0 18px}
+.bar{flex:1;min-width:0;display:flex;align-items:center;background:var(--surface);border-radius:999px;overflow:hidden}
+.bar .scroller{border-radius:0;--fl:0px;--fr:0px;
+  -webkit-mask-image:linear-gradient(to right,transparent 0,#000 var(--fl),#000 calc(100% - var(--fr)),transparent 100%);
+  mask-image:linear-gradient(to right,transparent 0,#000 var(--fl),#000 calc(100% - var(--fr)),transparent 100%)}
+.bar .track{background:transparent}
+.ind{top:3px;bottom:3px}
+.veil{position:absolute;top:0;left:0;right:0;height:calc(env(safe-area-inset-top,0px) + 96px);z-index:5;pointer-events:none;
+  background:linear-gradient(to bottom,var(--bg) 0%,var(--bg) 55%,color-mix(in srgb,var(--bg) 85%,transparent) 72%,color-mix(in srgb,var(--bg) 0%,transparent) 100%);
+  opacity:0;transition:opacity .25s ease}
+.veil.on{opacity:1}
+
+/* Pas d'ascenseur visible */
+.pane{scrollbar-width:none}.pane::-webkit-scrollbar{display:none}
+/* Cartes sans schéma, aperçu au maintien */
+.ex{grid-template-columns:minmax(0,1fr);-webkit-touch-callout:none;-webkit-user-select:none;user-select:none;
+  transition:transform .25s cubic-bezier(.2,.8,.2,1);border-radius:18px}
+.ex.holding{transform:scale(.975)}
+.hint{font-size:12.5px;color:var(--muted);display:flex;align-items:center;gap:8px}
+.hint::before{content:"";width:14px;height:14px;border-radius:50%;border:1.5px solid var(--accent);box-sizing:border-box}
+.peek{position:fixed;inset:0;z-index:20;display:grid;place-items:center;padding:24px;
+  background:rgba(235,235,235,.55);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);animation:pkIn .2s ease-out}
+.peek.out{animation:pkOut .16s ease-in forwards}
+.pcard{width:min(340px,100%);background:var(--surface);border-radius:28px;padding:14px 14px 18px;display:flex;flex-direction:column;gap:12px;
+  box-shadow:0 24px 60px rgba(0,0,0,.18);transform-origin:var(--ox,50%) var(--oy,50%);animation:pcIn .32s cubic-bezier(.2,.9,.25,1.15)}
+.peek.out .pcard{animation:pcOut .16s ease-in forwards}
+.pfig{background:var(--panel);border-radius:20px;aspect-ratio:6/5}
+.pfig svg{display:block;width:100%;height:100%}
+.pname{font-size:22px;font-weight:500;letter-spacing:-.03em;line-height:1.1;padding-inline:6px}
+.pcard .legend{padding-inline:6px}
+@keyframes pkIn{from{opacity:0}to{opacity:1}}
+@keyframes pkOut{to{opacity:0}}
+@keyframes pcIn{from{transform:scale(.6);opacity:0}to{transform:scale(1);opacity:1}}
+@keyframes pcOut{to{transform:scale(.85);opacity:0}}
+@media (prefers-reduced-motion:reduce){.peek,.pcard,.peek.out,.peek.out .pcard{animation:none}}
+</style>
+
+<div class="app">
+  <div class="veil" id="veil" aria-hidden="true"></div>
+  <nav class="week" aria-label="Séances et infos"><div class="bar"><span class="mark" role="img" aria-label="Logo"><svg viewBox="0 0 115 83" width="22" height="16" aria-hidden="true"><path fill="var(--ink)" d="M75.2585 82.74C74.5285 82.74 73.8485 82.35 73.4785 81.71L55.9785 51.4C55.3385 50.29 53.7785 50.19 52.9985 51.21L34.6585 75.17C30.7485 80.28 25.0385 82.74 19.3585 82.74C12.3785 82.74 5.44848 79.01 1.97848 71.9C-4.31152 59 5.16848 43.99 19.5185 44.13L48.8185 44.42C50.2085 44.43 51.0885 42.93 50.3885 41.73L28.0885 3.08C27.2985 1.71 28.2885 0 29.8685 0H66.8885C67.6185 0 68.2985 0.39 68.6685 1.03L114.068 79.66C114.858 81.03 113.868 82.74 112.288 82.74H75.2585Z"/></svg></span><div class="scroller" id="week"><div class="track" id="track" role="tablist"><span class="ind" id="ind"></span></div></div></div></nav>
+  <div class="pager" id="pager"></div>
+</div>
+<div hidden>
+<section class="sec page" id="p-methode" hidden role="tabpanel" aria-labelledby="tab-methode">
+    <div class="dayhead"><div class="eyebrow">Comment s’entraîner</div><h2>Méthode</h2></div>
+    <div class="tw">
+      <table>
+        <tbody>
+          <tr><td class="k">Superset</td><td>Fais A, puis B avec 15 secondes maximum entre les deux. Prends ensuite le repos indiqué, et recommence.</td></tr>
+          <tr><td class="k">Intensité</td><td>Arrête chaque série à 1 ou 2 répétitions de l'échec. Sur la dernière série d'un exercice d'isolation, tu peux aller à l'échec.</td></tr>
+          <tr><td class="k">Progression</td><td>Quand tu atteins le haut de la fourchette sur toutes les séries, monte la charge à la séance suivante.</td></tr>
+          <tr><td class="k">Tempo</td><td>Descente contrôlée sur 2 secondes.</td></tr>
+          <tr><td class="k">Échauffement</td><td>5 minutes de cardio léger, puis 2 séries légères du premier exercice.</td></tr>
+          <tr><td class="k">Dos et coude</td><td>Garde uniquement des mouvements indolores. Si l'extension au-dessus de la tête gêne le coude, remplace-la par l'extension corde.</td></tr>
+          <tr><td class="k">Minuteur</td><td>Touche le numéro d'une série quand tu l'as finie : le repos démarre tout seul.</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+<section class="sec page" id="p-volume" hidden role="tabpanel" aria-labelledby="tab-volume">
+    <div class="dayhead"><div class="eyebrow">Séries par muscle et par semaine</div><h2>Volume</h2></div>
+    <div class="tw">
+      <table>
+        <thead><tr><th>Muscle</th><th>Séries</th><th>Jours</th><th>Rôle</th></tr></thead>
+        <tbody>
+          <tr><td class="k">Biceps</td><td class="n">18</td><td class="m">4 / 4</td><td><span class="pill p">Priorité</span></td></tr>
+          <tr><td class="k">Triceps</td><td class="n">18</td><td class="m">4 / 4</td><td><span class="pill p">Priorité</span></td></tr>
+          <tr><td class="k">Deltoïde latéral</td><td class="n">15</td><td class="m">4 / 4</td><td><span class="pill p">Priorité</span></td></tr>
+          <tr><td class="k">Deltoïde postérieur</td><td class="n">14</td><td class="m">2 / 4</td><td><span class="pill p">Priorité</span></td></tr>
+          <tr><td class="k">Développé épaules</td><td class="n">8</td><td class="m">2 / 4</td><td><span class="pill p">Priorité</span></td></tr>
+          <tr><td class="k">Omoplates (rowings)</td><td class="n">6</td><td class="m">2 / 4</td><td><span class="pill">Posture</span></td></tr>
+          <tr><td class="k">Gainage</td><td class="n">11</td><td class="m">4 / 4</td><td><span class="pill">Posture</span></td></tr>
+          <tr><td class="k">Pecs haut</td><td class="n">6</td><td class="m">2 / 4</td><td><span class="pill">Entretien</span></td></tr>
+          <tr><td class="k">Quadriceps</td><td class="n">9</td><td class="m">3 / 4</td><td><span class="pill">Entretien</span></td></tr>
+          <tr><td class="k">Ischios</td><td class="n">6</td><td class="m">2 / 4</td><td><span class="pill">Entretien</span></td></tr>
+          <tr><td class="k">Fessiers</td><td class="n">6</td><td class="m">2 / 4</td><td><span class="pill">Entretien</span></td></tr>
+          <tr><td class="k">Mollets</td><td class="n">3</td><td class="m">1 / 4</td><td><span class="pill">Entretien</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+</div>
+
+<div class="peek" id="peek" hidden aria-hidden="true"><div class="pcard" id="pcard"><div class="pfig" id="pfig"></div><div class="pname" id="pname"></div><div class="legend"><span><i class="lg"></i>Départ</span><span><i class="la"></i>Arrivée</span></div></div></div>
+<div class="timer" id="timer" hidden>
+  <div class="bar" id="tbar"></div>
+  <div class="in">
+    <div class="tc"><span class="tl" id="tlabel">Repos</span><span class="tt" id="ttime">0:00</span></div>
+    <div class="tb"><button type="button" id="tplus">+15 s</button><button type="button" id="tstop">Stop</button></div>
+  </div>
+</div>
+
+<script>
+/* ---------- Schémas : départ en teinte claire, arrivée en foncé ---------- */
+var STAND={s:[71,30],p:[66,58],k:[67,75],f:[69,92]};
+var SEATF={p:[66,66],k:[70,74],f:[72,91]};
+var LEGS2={k:[58,74],f:[60,92],k2:[55,74],f2:[51,92]};
+function mix(a,b){var o={},k;for(k in a)o[k]=a[k];for(k in b)o[k]=b[k];return o}
+var SEAT_PROPS=[['L',43,67,70,67],['L',40,38,44,66],['l',56,67,56,93]];
+var FIG={
+  incline:{v:'s',props:[['L',36,61,59,77],['L',59,77,76,77],['l',46,69,46,93],['l',70,77,70,93]],
+    a:{s:[39,56],p:[62,72],e:[47,67],w:[47,53],k:[81,71],f:[84,92],g:['db']},
+    b:{s:[39,56],p:[62,72],e:[39,41],w:[39,27],k:[81,71],f:[84,92],g:['db']}},
+  legpress:{v:'s',props:[['L',14.6,59.2,37,76],['L',37,76,48,76],['l',30,76,30,93],['l',50,82,96,36]],
+    a:{s:[17.6,55.2],p:[40,72],e:[30,72],w:[40,78],k:[40.5,53.1],f:[58.7,58.3],g:['plat']},
+    b:{s:[17.6,55.2],p:[40,72],e:[30,72],w:[40,78],k:[54,58],f:[70,47],g:['plat']}},
+  cablefly:{v:'f',props:[['l',8,14,8,93],['l',112,14,112,93]],
+    a:mix(STAND,{e:[81,42],w:[92,51],g:[['cable',112,88]]}),
+    b:mix(STAND,{e:[77,40],w:[64,29],g:[['cable',112,88]]})},
+  lateral:{v:'f',props:[],
+    a:mix(STAND,{e:[74,45],w:[76,59],g:['db']}),
+    b:mix(STAND,{e:[85.5,33],w:[99,35],g:['db']})},
+  latcable:{v:'f',props:[['l',10,14,10,93],['c',12,88,2.5]],
+    a:mix(STAND,{e:[74,45],w:[70,58],e2:[46,45],w2:[44,59],one:1,g:[['cable',12,88]]}),
+    b:mix(STAND,{e:[85.5,33],w:[99,35],e2:[46,45],w2:[44,59],one:1,g:[['cable',12,88]]})},
+  yraise:{v:'f',props:[['l',8,14,8,93],['l',112,14,112,93]],
+    a:mix(STAND,{e:[68,45],w:[61,57],g:[['cable',8,88]]}),
+    b:mix(STAND,{e:[78.5,17],w:[85.5,5],g:[['cable',8,88]]})},
+  legext:{v:'s',props:SEAT_PROPS,
+    a:{s:[45,34],p:[50,62],e:[49,49],w:[57,60],k:[69,61],f:[66,80],g:['roll']},
+    b:{s:[45,34],p:[50,62],e:[49,49],w:[57,60],k:[69,61],f:[88,59],g:['roll']}},
+  legcurl:{v:'s',props:SEAT_PROPS,
+    a:{s:[45,34],p:[50,62],e:[49,49],w:[57,60],k:[69,61],f:[88,60],g:['roll']},
+    b:{s:[45,34],p:[50,62],e:[49,49],w:[57,60],k:[69,61],f:[63,79],g:['roll']}},
+  pushdown:{v:'s',props:[['l',102,8,102,93],['c',99,11,2.5]],
+    a:{s:[57,30],p:[54,58],k:[57,75],f:[59,92],k2:[52,75],f2:[49,92],e:[58,45],w:[70,38],g:[['cable',99,11]]},
+    b:{s:[57,30],p:[54,58],k:[57,75],f:[59,92],k2:[52,75],f2:[49,92],e:[58,45],w:[63,58.5],g:[['cable',99,11]]}},
+  pushbar:{v:'s',props:[['l',102,8,102,93],['c',99,11,2.5]],
+    a:{s:[57,30],p:[54,58],k:[57,75],f:[59,92],k2:[52,75],f2:[49,92],e:[58,45],w:[70,38],g:[['cable',99,11],'dbc']},
+    b:{s:[57,30],p:[54,58],k:[57,75],f:[59,92],k2:[52,75],f2:[49,92],e:[58,45],w:[63,58.5],g:[['cable',99,11],'dbc']}},
+  calf:{v:'s',props:[['r',52,88,22,5]],
+    a:{s:[57,26],p:[57,54],k:[58,72],f:[55,91],t:[66,88],e:[58,41],w:[59,55]},
+    b:{s:[58,19],p:[58,47],k:[59,65],f:[57,83],t:[66,88],e:[59,34],w:[60,48]}},
+  ohtri:{v:'s',props:[['l',8,8,8,93],['c',11,12,2.5]],
+    a:{s:[62,38],p:[52,60],k:[61,76],f:[62,92],k2:[45,77],f2:[36,92],e:[75,30],w:[63,23],g:[['cable',11,12]]},
+    b:{s:[62,38],p:[52,60],k:[61,76],f:[62,92],k2:[45,77],f2:[36,92],e:[75,30],w:[88,24],g:[['cable',11,12]]}},
+  plank:{v:'s',props:[],
+    b:{s:[40,75],p:[67,80],k:[84,84],f:[101,90],e:[40,90],w:[54,90]}},
+  revfly:{v:'f',props:[['L',48,66,72,66],['l',60,66,60,93]],
+    a:mix({p:[66,62],k:[70,70],f:[72,91]},{s:[71,36],e:[70,46],w:[64,40],g:['db']}),
+    b:mix({p:[66,62],k:[70,70],f:[72,91]},{s:[71,36],e:[85.5,37],w:[99,37],g:['db']})},
+  revcable:{v:'f',props:[['l',8,10,8,93],['l',112,10,112,93]],
+    a:mix(STAND,{e:[66,41],w:[53,37],g:[['cable',8,12]]}),
+    b:mix(STAND,{e:[85.5,32],w:[99,33],g:[['cable',8,12]]})},
+  row:{v:'s',props:[['L',48,72,72,52],['l',60,63,60,93]],
+    a:{s:[67.5,50],p:[46,68],k:[37,84],f:[23,92],e:[68,65],w:[68.5,79],g:['dbc']},
+    b:{s:[67.5,50],p:[46,68],k:[37,84],f:[23,92],e:[53,46],w:[54,60],g:['dbc']}},
+  seatedrow:{v:'s',props:[['L',26,72,50,72],['l',38,72,38,93],['L',76,60,76,78],['l',106,40,106,93],['c',104,58,2.5]],
+    a:{s:[40,40],p:[38,68],k:[56,60],f:[73,70],e:[55,44],w:[69,47],g:[['cable',104,58]]},
+    b:{s:[40,40],p:[38,68],k:[56,60],f:[73,70],e:[27,47],w:[41,51],g:[['cable',104,58]]}},
+  incurl:{v:'s',props:[['L',39.5,49,53.5,73],['L',53.5,75,74,75],['l',62,75,62,93]],
+    a:{s:[44,46],p:[58,70],k:[77,70],f:[80,92],e:[44,61],w:[45,75],g:['dbc']},
+    b:{s:[44,46],p:[58,70],k:[77,70],f:[80,92],e:[44,61],w:[56,53],g:['dbc']}},
+  preacher:{v:'s',props:[['L',55,43,68,55],['l',62,52,62,93],['L',36,68,56,68],['l',46,68,46,93]],
+    a:{s:[52,36],p:[46,64],k:[65,64],f:[66,90],e:[63,46.2],w:[73,57],g:['dbc']},
+    b:{s:[52,36],p:[46,64],k:[65,64],f:[66,90],e:[63,46.2],w:[60,32],g:['dbc']}},
+  facepull:{v:'s',props:[['l',106,8,106,93],['c',103,26,2.5]],
+    a:{s:[50,32],p:[48,60],k:[53,77],f:[55,92],k2:[44,77],f2:[39,92],e:[64,31],w:[78,30],g:[['cable',103,26]]},
+    b:{s:[50,32],p:[48,60],k:[53,77],f:[55,92],k2:[44,77],f2:[39,92],e:[45,27],w:[57,23],g:[['cable',103,26]]}},
+  hammer:{v:'s',props:[],
+    a:mix(LEGS2,{s:[56,28],p:[56,56],e:[57,43],w:[58,57],g:['db']}),
+    b:mix(LEGS2,{s:[56,28],p:[56,56],e:[57,43],w:[66,32],g:['db']})},
+  cablecurl:{v:'s',props:[['l',104,40,104,93],['c',101,88,2.5]],
+    a:mix(LEGS2,{s:[56,28],p:[56,56],e:[57,43],w:[58,57],g:[['cable',101,88],'dbc']}),
+    b:mix(LEGS2,{s:[56,28],p:[56,56],e:[57,43],w:[66,32],g:[['cable',101,88],'dbc']})},
+  ezcurl:{v:'s',props:[],
+    a:mix(LEGS2,{s:[56,28],p:[56,56],e:[57,43],w:[58,57],g:[['plate',6]]}),
+    b:mix(LEGS2,{s:[56,28],p:[56,56],e:[57,43],w:[66,32],g:[['plate',6]]})},
+  ohp:{v:'f',props:[['L',48,70,72,70],['l',60,70,60,93]],
+    a:mix(SEATF,{s:[71,40],e:[85,48],w:[85,34],g:['db']}),
+    b:mix(SEATF,{s:[71,40],e:[78,26.5],w:[76,12.5],g:['db']})},
+  hipthrust:{v:'s',props:[['r',24,73,16,20]],
+    a:{s:[38,70],p:[60,87],k:[75,76],f:[85,92],e:[50,76],w:[61,81],g:['hipbar']},
+    b:{s:[38,70],p:[66,71],k:[85,72],f:[85,92],e:[52,67],w:[65,65],g:['hipbar']}},
+  bulgarian:{v:'s',props:[['r',18,77,18,16]],
+    a:{s:[58,24],p:[56,52],k:[66,69],f:[68,91],k2:[46,70],f2:[30,75],e:[58,39],w:[59,53],g:['db']},
+    b:{s:[58,41],p:[54,68],k:[72,72],f:[68,91],k2:[44,85],f2:[30,75],e:[58,56],w:[59,70],g:['db']}},
+  crunch:{v:'s',props:[['l',106,6,106,93],['c',103,9,2.5]],
+    a:{s:[66,45.5],p:[56,71.5],k:[60,90],f:[42,90],e:[74,53],w:[74,39.5],g:[['cable',103,9]]},
+    b:{s:[76,62],p:[56,71.5],k:[60,90],f:[42,90],h:[84,66],e:[82,73],w:[88,60],g:[['cable',103,9]]}},
+  sideplank:{v:'s',props:[],
+    b:{s:[42,73],p:[68,80],k:[85,85],f:[102,90],e:[42,88],w:[55,89],e2:[42,58],w2:[42,44]}},
+  deadbug:{v:'s',props:[['l',26,91,112,91]],
+    b:{s:[44,86],p:[72,86],e:[44,71],w:[44,57],k:[72,67],f:[91,67],e2:[31,81],w2:[18,77],k2:[90,83],f2:[108,81]}}
+};
+function mir(p){return [120-p[0],p[1]]}
+function pl(pts,cls){return '<polyline class="'+cls+'" points="'+pts.map(function(p){return p[0]+','+p[1]}).join(' ')+'"/>'}
+function ln(a,b,cls){return '<line class="'+cls+'" x1="'+a[0]+'" y1="'+a[1]+'" x2="'+b[0]+'" y2="'+b[1]+'"/>'}
+function headOf(P,v){
+  if(P.h)return P.h;
+  if(v==='f')return [60,P.s[1]-11];
+  var dx=P.s[0]-P.p[0],dy=P.s[1]-P.p[1],d=Math.hypot(dx,dy)||1;
+  return [+(P.s[0]+dx/d*10).toFixed(1),+(P.s[1]+dy/d*10).toFixed(1)];
+}
+function gearSvg(P,v,c){
+  if(!P.g)return '';
+  var o='',arms=[[P.e,P.w]];
+  if(v==='f'&&!P.one)arms.push([P.e2||mir(P.e),P.w2||mir(P.w)]);
+  P.g.forEach(function(g){
+    var t=Array.isArray(g)?g[0]:g;
+    if(t==='db')arms.forEach(function(a){
+      var dx=a[1][0]-a[0][0],dy=a[1][1]-a[0][1],d=Math.hypot(dx,dy)||1,nx=-dy/d*4.5,ny=dx/d*4.5;
+      o+=ln([+(a[1][0]-nx).toFixed(1),+(a[1][1]-ny).toFixed(1)],[+(a[1][0]+nx).toFixed(1),+(a[1][1]+ny).toFixed(1)],c+' gw');
+    });
+    else if(t==='dbc')arms.forEach(function(a){o+='<circle class="'+c+' gf" cx="'+a[1][0]+'" cy="'+a[1][1]+'" r="3.4"/>'});
+    else if(t==='plate'){o+='<circle class="'+c+' go" cx="'+P.w[0]+'" cy="'+P.w[1]+'" r="'+g[1]+'"/><circle class="'+c+' gf" cx="'+P.w[0]+'" cy="'+P.w[1]+'" r="1.8"/>'}
+    else if(t==='cable')arms.forEach(function(a,i){var an=i?mir([g[1],g[2]]):[g[1],g[2]];o+=ln(an,a[1],c+' gl')});
+    else if(t==='roll')o+='<circle class="'+c+' gf" cx="'+P.f[0]+'" cy="'+P.f[1]+'" r="3.4"/>';
+    else if(t==='plat')o+=ln([P.f[0]-3,P.f[1]-7],[P.f[0]+7,P.f[1]+3],c+' gw');
+    else if(t==='hipbar'){var x=P.p[0]+1,y=P.p[1]-7;o+='<circle class="'+c+' go" cx="'+x+'" cy="'+y+'" r="6.5"/><circle class="'+c+' gf" cx="'+x+'" cy="'+y+'" r="1.8"/>'}
+  });
+  return o;
+}
+function bodySvg(P,v,ghost){
+  var b='bd '+(ghost?'bG':'bA'),hc=ghost?'hG':'hA',o='',h=headOf(P,v);
+  if(v==='f'){
+    var s2=mir(P.s),p2=mir(P.p);
+    o+='<polygon class="'+b+'" points="'+[P.s,s2,p2,P.p].map(function(p){return p[0]+','+p[1]}).join(' ')+'"/>';
+    o+=pl([P.s,P.e,P.w],b)+pl([s2,P.e2||mir(P.e),P.w2||mir(P.w)],b);
+    o+=pl([P.p,P.k,P.f],b)+pl([p2,mir(P.k),mir(P.f)],b);
+  }else{
+    if(P.k2)o+=pl([P.p,P.k2,P.f2],b);
+    o+=pl([P.s,P.p],b);
+    o+=pl(P.t?[P.p,P.k,P.f,P.t]:[P.p,P.k,P.f],b);
+    if(P.e2)o+=pl([P.s,P.e2,P.w2],b);
+    o+=pl([P.s,P.e,P.w],b);
+  }
+  return o+gearSvg(P,v,ghost?'gG':'gA')+'<circle class="'+hc+'" cx="'+h[0]+'" cy="'+h[1]+'" r="5.6"/>';
+}
+function figSvg(id,label){
+  var F=FIG[id];if(!F)return '';
+  var o='<svg viewBox="0 0 120 100" role="img" aria-label="Schéma : '+label+'"><line class="gr" x1="6" y1="94.5" x2="114" y2="94.5"/>';
+  F.props.forEach(function(p){
+    if(p[0]==='l')o+=ln([p[1],p[2]],[p[3],p[4]],'eq');
+    else if(p[0]==='L')o+=ln([p[1],p[2]],[p[3],p[4]],'eqL');
+    else if(p[0]==='c')o+='<circle class="eq" cx="'+p[1]+'" cy="'+p[2]+'" r="'+p[3]+'"/>';
+    else if(p[0]==='r')o+='<rect class="eqr" x="'+p[1]+'" y="'+p[2]+'" width="'+p[3]+'" height="'+p[4]+'" rx="2"/>';
+  });
+  if(F.a)o+=bodySvg(F.a,F.v,true);
+  o+=bodySvg(F.b,F.v,false);
+  return o+'</svg>';
+}
+
+/* ---------- Exercices ---------- */
+var E={
+  ohp:{n:'Développé épaules haltères',sub:'Assis, dossier à 80°',fig:'ohp',mus:'Deltoïde antérieur et latéral',cue:'Descends les haltères à hauteur des oreilles. Pousse sans cambrer le bas du dos.'},
+  ohpM:{n:'Développé épaules machine',fig:'ohp',mus:'Deltoïde antérieur et latéral',cue:'Dos bien calé contre le dossier. Descends jusqu\'à hauteur du menton, sans verrouiller les coudes en haut.'},
+  legpress:{n:'Presse à cuisses',fig:'legpress',mus:'Quadriceps · Fessiers',cue:'Le bas du dos reste collé au dossier. Descends seulement tant que le bassin ne s\'enroule pas.'},
+  incline:{n:'Développé incliné haltères',sub:'Banc à 30°',fig:'incline',mus:'Pecs haut',cue:'Coudes à 45° du buste. Descends les haltères au niveau des pecs.'},
+  lateral:{n:'Élévations latérales haltères',fig:'lateral',mus:'Deltoïde latéral',cue:'Monte jusqu\'à l\'horizontale, coudes à peine fléchis. Descente freinée sur 2 secondes.'},
+  latcable:{n:'Élévations latérales à la poulie',fig:'latcable',mus:'Deltoïde latéral',cue:'Poulie basse, un bras à la fois. Tension constante, pas d\'élan.'},
+  pushdown:{n:'Extension triceps à la corde',fig:'pushdown',mus:'Triceps',cue:'Coudes collés au corps. Écarte la corde en bas de chaque répétition.'},
+  pushbar:{n:'Extension triceps à la barre droite',sub:'Poulie haute',fig:'pushbar',mus:'Triceps',cue:'Coudes fixes le long du corps. Tends complètement, remonte lentement.'},
+  ohtri:{n:'Extension triceps au-dessus de la tête',sub:'Poulie et corde',fig:'ohtri',mus:'Triceps, portion longue',cue:'Coudes fixes près de la tête. Si le coude gêne, remplace par l\'extension corde.'},
+  cablecurl:{n:'Curl poulie basse',fig:'cablecurl',mus:'Biceps',cue:'Coudes fixes, tension constante. Serre 1 seconde en haut.'},
+  plank:{n:'Planche sur les avant-bras',fig:'plank',mus:'Gainage',cue:'Corps aligné des épaules aux talons. Fessiers serrés, pas de dos creux.'},
+  revfly:{n:'Reverse fly à la machine',sub:'Pec deck inversé',fig:'revfly',mus:'Deltoïde postérieur',cue:'Ton point faible passe en premier. Tire avec les coudes, sans hausser les épaules.'},
+  revcable:{n:'Reverse fly aux poulies',sub:'Poulies croisées',fig:'revcable',mus:'Deltoïde postérieur',cue:'Bras croisés au départ, ouvre jusqu\'à l\'alignement des épaules. Charge légère.'},
+  row:{n:'Rowing poitrine supportée',fig:'row',mus:'Omoplates · Deltoïde postérieur',cue:'Poitrine calée sur le banc. Tire les coudes vers l\'arrière et serre les omoplates 1 seconde.'},
+  seatedrow:{n:'Rowing poulie assis',fig:'seatedrow',mus:'Omoplates · Posture',cue:'Buste droit et immobile. Serre les omoplates 1 seconde, sans hausser les épaules.'},
+  facepull:{n:'Face pull à la corde',fig:'facepull',mus:'Deltoïde postérieur · Posture',cue:'Poulie à hauteur du visage. Tire vers le front, coudes hauts, mains qui s\'écartent.'},
+  hipthrust:{n:'Hip thrust',fig:'hipthrust',mus:'Fessiers',cue:'Menton rentré, tibias verticaux en haut. Bloque 1 seconde, sans cambrer.'},
+  legcurl:{n:'Leg curl assis',fig:'legcurl',mus:'Ischios',cue:'Dos collé au dossier. Ramène les talons sous le siège, retour lent.'},
+  incurl:{n:'Curl incliné haltères',sub:'Banc à 60°',fig:'incurl',mus:'Biceps, portion longue',cue:'Les bras pendent derrière le buste. Les coudes ne bougent pas.'},
+  hammer:{n:'Curl marteau',fig:'hammer',mus:'Brachial · Avant-bras',cue:'Prise neutre, coudes fixes le long du corps. Pas de balancement.'},
+  sideplank:{n:'Planche latérale',fig:'sideplank',mus:'Obliques',cue:'Hanches hautes, corps en ligne droite. Le bras levé est optionnel.'},
+  bulgarian:{n:'Fentes bulgares',fig:'bulgarian',mus:'Fessiers · Quadriceps',cue:'Grand pas, buste légèrement penché. Toutes les séries d\'une jambe, puis l\'autre.'},
+  fly:{n:'Écarté poulie bas vers haut',fig:'cablefly',mus:'Pecs haut',cue:'Poulies en bas. Monte les mains jusqu\'au menton et serre 1 seconde.'},
+  calf:{n:'Mollets à la machine',fig:'calf',mus:'Mollets',cue:'Étirement complet en bas, 1 seconde de pause en haut. Pas de rebond.'},
+  preacher:{n:'Curl pupitre',fig:'preacher',mus:'Biceps',cue:'Bras bien à plat sur le pupitre. Ne tends pas complètement en bas pour ménager le coude.'},
+  crunch:{n:'Crunch à la poulie',fig:'crunch',mus:'Abdominaux',cue:'À genoux, corde près de la tête. Enroule le dos, les hanches ne bougent pas.'},
+  legext:{n:'Leg extension',fig:'legext',mus:'Quadriceps',cue:'Bloque 1 seconde jambes tendues. Les fesses restent collées au siège.'},
+  ezcurl:{n:'Curl barre EZ',fig:'ezcurl',mus:'Biceps',cue:'Coudes fixes, monte jusqu\'à la contraction complète. Descente sur 2 secondes.'},
+  hammerrope:{n:'Curl marteau à la corde',sub:'Poulie basse',fig:'cablecurl',mus:'Brachial · Avant-bras',cue:'Prise neutre sur la corde, coudes fixes. Tension constante du début à la fin.'},
+  yraise:{n:'Y-raise à la poulie',sub:'Poulies basses croisées',fig:'yraise',mus:'Bas des trapèzes · Posture',cue:'Monte les bras en Y, pouces vers le haut. Abaisse les épaules, charge très légère.'},
+  deadbug:{n:'Dead bug',fig:'deadbug',mus:'Gainage profond',cue:'Bas du dos plaqué au sol. Tends le bras et la jambe opposés, lentement.'}
+};
+var DAYS=[
+  {id:'lundi',day:'Lundi',name:'Push A',focus:'Épaules, triceps, quadriceps',blocks:[
+    {rest:120,ex:[['ohp',4,'6-10']]},
+    {rest:120,ex:[['legpress',3,'10-12']]},
+    {rest:75,ex:[['incline',3,'8-10'],['lateral',3,'12-15']]},
+    {rest:60,ex:[['pushdown',3,'10-15'],['latcable',3,'12-15','reps par bras']]},
+    {rest:60,ex:[['ohtri',3,'10-15'],['cablecurl',3,'10-15']]},
+    {rest:30,ex:[['plank',3,'30-45 s','tenue']]}
+  ]},
+  {id:'mardi',day:'Mardi',name:'Pull A',focus:'Deltoïde postérieur, biceps, posture',blocks:[
+    {rest:60,ex:[['revfly',4,'12-20']]},
+    {rest:75,ex:[['row',3,'10-12'],['facepull',3,'15-20']]},
+    {rest:90,ex:[['hipthrust',3,'8-12'],['legcurl',3,'10-15']]},
+    {rest:60,ex:[['incurl',3,'10-12'],['pushdown',3,'10-15']]},
+    {rest:60,ex:[['hammer',3,'10-12'],['lateral',3,'12-15']]},
+    {rest:30,ex:[['sideplank',2,'30-40 s','par côté']]}
+  ]},
+  {id:'jeudi',day:'Jeudi',name:'Push B',focus:'Épaules, triceps, fessiers',blocks:[
+    {rest:120,ex:[['ohpM',4,'8-10']]},
+    {rest:90,ex:[['bulgarian',3,'8-10','reps par jambe']]},
+    {rest:75,ex:[['pushbar',3,'10-12'],['lateral',3,'12-15']]},
+    {rest:60,ex:[['fly',3,'12-15'],['calf',3,'12-20']]},
+    {rest:60,ex:[['ohtri',3,'10-15'],['preacher',3,'10-12']]},
+    {rest:45,ex:[['crunch',3,'12-15']]}
+  ]},
+  {id:'vendredi',day:'Vendredi',name:'Pull B',focus:'Posture, biceps, ischios',blocks:[
+    {rest:60,ex:[['revcable',4,'12-20']]},
+    {rest:75,ex:[['seatedrow',3,'10-12'],['latcable',3,'12-15','reps par bras']]},
+    {rest:60,ex:[['legext',3,'12-15'],['legcurl',3,'10-15']]},
+    {rest:60,ex:[['ezcurl',3,'8-12'],['pushdown',3,'12-15']]},
+    {rest:60,ex:[['hammerrope',3,'12-15'],['yraise',3,'12-15']]},
+    {rest:30,ex:[['deadbug',3,'8-10','reps par côté']]}
+  ]}
+];
+
+/* ---------- État ---------- */
+var KEY='pushpull4-v2';
+function today(){var d=new Date();return d.getFullYear()+'-'+(d.getMonth()+1)+'-'+d.getDate()}
+var prog={d:today(),c:{}};
+try{var raw=localStorage.getItem(KEY);if(raw){var pr=JSON.parse(raw);if(pr&&pr.d===today()&&pr.c)prog=pr}}catch(e){}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(prog))}catch(e){}}
+function fmtRest(s){var m=Math.floor(s/60),r=s%60;if(!m)return s+' s';return r?m+' min '+r:m+' min'}
+function clock(s){var m=Math.floor(s/60),r=s%60;return m+':'+(r<10?'0':'')+r}
+
+function dayById(id){for(var i=0;i<DAYS.length;i++)if(DAYS[i].id===id)return DAYS[i];return null}
+var PAGES=[['lundi','Lun','Push A'],['mardi','Mar','Pull A'],['jeudi','Jeu','Push B'],['vendredi','Ven','Pull B'],['volume','','Volume'],['methode','','Méthode']];
+function pageIndex(id){for(var i=0;i<PAGES.length;i++)if(PAGES[i][0]===id)return i;return -1}
+function pickDefault(){
+  var h=(location.hash||'').replace('#','');
+  if(pageIndex(h)>=0)return h;
+  return ['lundi','lundi','mardi','jeudi','jeudi','vendredi','lundi'][new Date().getDay()];
+}
+function renderDay(D){
+  var total=0,o='';
+  D.blocks.forEach(function(b){b.ex.forEach(function(x){total+=x[1]})});
+  o+='<div class="dayhead"><div class="eyebrow">'+D.day+'</div><h2>'+D.name+'</h2><div class="focus">'+D.focus+'</div>';
+  o+='<div class="stats"><div class="stat"><span class="big">'+total+'</span><span class="cap">séries</span></div><div class="stat"><span class="big">65</span><span class="cap">minutes<br>environ</span></div></div>';
+  o+='<div class="hint">Maintiens un exercice pour voir le mouvement</div></div>';
+  o+='<div class="blocks">';
+  D.blocks.forEach(function(b,i){
+    var n=i+1,sup=b.ex.length>1,sets=b.ex[0][1],id=D.id+'-'+i,done=prog.c[id]||0;
+    o+='<article class="block'+(sup?' sup':'')+'">';
+    if(sup)o+='<div class="bhead"><span class="btag">Superset '+n+'</span><span class="how">'+n+'A puis '+n+'B, 15 s max · repos <b>'+fmtRest(b.rest)+'</b> · '+sets+' tours</span></div>';
+    else o+='<div class="bhead"><span class="btag">Exercice '+n+'</span><span class="how">Repos <b>'+fmtRest(b.rest)+'</b> entre les séries</span></div>';
+    b.ex.forEach(function(x,j){
+      var e=E[x[0]],num=sup?n+(j?'B':'A'):String(n),unit=x[3]||'reps';
+      o+='<div class="ex" data-fig="'+e.fig+'" data-name="'+e.n+'"><div class="info">';
+      o+='<span class="num">'+num+'</span><div class="ttl"><h3>'+e.n+'</h3></div>';
+      if(e.sub)o+='<div class="sub">'+e.sub+'</div>';
+      o+='<div class="dose"><b>'+x[1]+' × '+x[2].replace('-',' à ')+'</b><span>'+unit+'</span></div>';
+      o+='<p class="cue">'+e.cue+'</p><div class="mus">'+e.mus+'</div></div></div>';
+    });
+    o+='<div class="bfoot"><div class="sets">';
+    for(var s=0;s<sets;s++)o+='<button type="button" class="set" data-block="'+id+'" data-i="'+s+'" data-rest="'+b.rest+'" aria-pressed="'+(s<done)+'" aria-label="'+(sup?'Tour ':'Série ')+(s+1)+'">'+(s+1)+'</button>';
+    o+='</div><button type="button" class="restbtn" data-rest="'+b.rest+'">Repos '+clock(b.rest)+'</button></div></article>';
+  });
+  o+='</div>';
+  return o;
+}
+/* ---------- Pager ---------- */
+var pager=document.getElementById('pager'),track=document.getElementById('track'),ind=document.getElementById('ind'),nav=document.getElementById('week');
+var panes=[],inners=[],pills=[],cur=0;
+PAGES.forEach(function(p,i){
+  var b=document.createElement('button');
+  b.type='button';b.className='wk';b.id='tab-'+p[0];b.dataset.i=i;b.setAttribute('role','tab');b.setAttribute('aria-controls','pane-'+p[0]);
+  b.innerHTML=(p[1]?'<span class="d">'+p[1]+'</span>':'')+'<span class="s">'+p[2]+'</span>';
+  track.appendChild(b);pills.push(b);
+  var pane=document.createElement('section');
+  pane.className='pane';pane.id='pane-'+p[0];pane.setAttribute('role','tabpanel');pane.setAttribute('aria-labelledby','tab-'+p[0]);
+  var inner=document.createElement('div');inner.className='inner';
+  var D=dayById(p[0]);
+  if(D)inner.innerHTML=renderDay(D);
+  else{var sec=document.getElementById('p-'+p[0]);sec.hidden=false;inner.appendChild(sec)}
+  pane.appendChild(inner);pager.appendChild(pane);panes.push(pane);inners.push(inner);
+});
+var lay=document.createElement('div');lay.className='lay';lay.setAttribute('aria-hidden','true');
+pills.forEach(function(b){var c=b.cloneNode(true);c.removeAttribute('id');c.removeAttribute('role');c.tabIndex=-1;lay.appendChild(c)});
+track.appendChild(lay);
+function fades(){
+  var max=nav.scrollWidth-nav.clientWidth;
+  nav.style.setProperty('--fl',nav.scrollLeft>2?'22px':'0px');
+  nav.style.setProperty('--fr',nav.scrollLeft<max-2?'28px':'0px');
+}
+nav.addEventListener('scroll',fades,{passive:true});
+var veil=document.getElementById('veil');
+function veilUpdate(){var pn=panes[cur];veil.classList.toggle('on',!!pn&&pn.scrollTop>4)}
+panes.forEach(function(pn){pn.addEventListener('scroll',function(){if(pn===panes[cur])veilUpdate()},{passive:true})});
+function W(){return pager.clientWidth||1}
+function clampI(i){return Math.max(0,Math.min(PAGES.length-1,i))}
+function paint(pos){
+  var i=clampI(Math.floor(pos)),j=clampI(i+1),f=Math.max(0,Math.min(1,pos-i));
+  var a=pills[i],b=pills[j];
+  var x=a.offsetLeft+(b.offsetLeft-a.offsetLeft)*f,w=a.offsetWidth+(b.offsetWidth-a.offsetWidth)*f;
+  ind.style.transform='translateX('+x.toFixed(1)+'px)';ind.style.width=w.toFixed(1)+'px';
+  ind.style.setProperty('--dot',Math.max(0,1-4*Math.min(f,1-f)).toFixed(2));
+  var tw=track.offsetWidth;lay.style.clipPath='inset(4px '+(tw-x-w).toFixed(1)+'px 4px '+x.toFixed(1)+'px round 999px)';
+  var r=clampI(Math.round(pos));
+  for(var k=0;k<pills.length;k++){var sel=k===r;if(pills[k].getAttribute('aria-selected')!==String(sel))pills[k].setAttribute('aria-selected',String(sel))}
+  nav.scrollLeft=x+w/2-nav.clientWidth/2;fades();
+  for(var n=0;n<inners.length;n++){
+    var d=Math.min(1,Math.abs(n-pos));
+    inners[n].style.transform=d>0.001?'scale('+(1-0.06*d).toFixed(3)+')':'';
+    inners[n].style.opacity=d>0.001?(1-0.45*d).toFixed(3):'';
+  }
+}
+var raf=0;
+pager.addEventListener('scroll',function(){
+  if(raf)return;
+  raf=requestAnimationFrame(function(){
+    raf=0;var pos=pager.scrollLeft/W();paint(pos);
+    var r=clampI(Math.round(pos));
+    if(r!==cur&&Math.abs(pos-r)<0.01){cur=r;for(var q=0;q<panes.length;q++)if(q!==r)panes[q].scrollTop=0;veilUpdate();try{history.replaceState(null,'','#'+PAGES[r][0])}catch(e){}}
+  });
+},{passive:true});
+function goTo(i,smooth){
+  i=clampI(i);
+  if(smooth)pager.scrollTo({left:i*W(),behavior:'smooth'});
+  else{pager.scrollLeft=i*W();cur=i;paint(i);for(var q=0;q<panes.length;q++)if(q!==i)panes[q].scrollTop=0}
+}
+track.addEventListener('click',function(e){var b=e.target.closest('.wk');if(!b)return;var i=+b.dataset.i;if(i===cur)panes[i].scrollTo({top:0,behavior:'smooth'});else goTo(i,true)});
+document.addEventListener('keydown',function(e){
+  var i=Math.round(pager.scrollLeft/W());
+  if(e.key==='ArrowRight')goTo(i+1,true);else if(e.key==='ArrowLeft')goTo(i-1,true);
+});
+window.addEventListener('resize',function(){goTo(cur,false)});
+window.addEventListener('hashchange',function(){var i=pageIndex(location.hash.replace('#',''));if(i>=0&&i!==cur)goTo(i,true)});
+
+/* ---------- Minuteur ---------- */
+var T=null,iv=null,hideTo=null;
+var bar=document.getElementById('timer'),tEl=document.getElementById('ttime'),lEl=document.getElementById('tlabel'),pEl=document.getElementById('tbar');
+function startTimer(sec){
+  clearTimeout(hideTo);
+  T={end:Date.now()+sec*1000,total:sec};
+  bar.classList.remove('done');lEl.textContent='Repos';bar.hidden=false;
+  if(!iv)iv=setInterval(tick,200);
+  tick();
+}
+function stopTimer(){T=null;clearInterval(iv);iv=null;clearTimeout(hideTo);bar.hidden=true}
+function tick(){
+  if(!T)return;
+  var left=Math.max(0,T.end-Date.now());
+  tEl.textContent=clock(Math.ceil(left/1000));
+  pEl.style.transform='scaleX('+(left/(T.total*1000)).toFixed(3)+')';
+  if(left<=0){
+    T=null;clearInterval(iv);iv=null;
+    bar.classList.add('done');lEl.textContent='Repos terminé';tEl.textContent='Go';
+    try{if(navigator.vibrate)navigator.vibrate([200,100,200])}catch(e){}
+    hideTo=setTimeout(function(){bar.hidden=true},5000);
+  }
+}
+document.getElementById('tplus').addEventListener('click',function(){
+  if(T){T.end+=15000;T.total+=15;tick()}else startTimer(15);
+});
+document.getElementById('tstop').addEventListener('click',stopTimer);
+pager.addEventListener('click',function(ev){
+  var s=ev.target.closest('.set');
+  if(s){
+    var id=s.dataset.block,i=+s.dataset.i,c0=prog.c[id]||0,next=(c0===i+1)?i:i+1;
+    prog.c[id]=next;save();
+    var all=document.querySelectorAll('.set[data-block="'+id+'"]');
+    for(var k=0;k<all.length;k++)all[k].setAttribute('aria-pressed',String(k<next));
+    if(next>c0){s.classList.remove('pop');void s.offsetWidth;s.classList.add('pop');startTimer(+s.dataset.rest)}
+    return;
+  }
+  var r=ev.target.closest('.restbtn');
+  if(r)startTimer(+r.dataset.rest);
+});
+goTo(pageIndex(pickDefault()),false);
+requestAnimationFrame(function(){goTo(cur,false)});
+
+/* ---------- Aperçu au maintien (comme Instagram) ---------- */
+(function(){
+  var peek=document.getElementById('peek'),pcard=document.getElementById('pcard'),pfig=document.getElementById('pfig'),pname=document.getElementById('pname');
+  var timer=null,target=null,sx=0,sy=0,open=false,outTo=null;
+  function cancel(){clearTimeout(timer);timer=null;if(target)target.classList.remove('holding');target=null}
+  function show(){
+    var ex=target;if(!ex)return;
+    clearTimeout(outTo);peek.classList.remove('out');
+    pfig.innerHTML=figSvg(ex.dataset.fig,ex.dataset.name);pname.textContent=ex.dataset.name;
+    peek.hidden=false;open=true;
+    var r=pcard.getBoundingClientRect();
+    pcard.style.setProperty('--ox',(sx-r.left)+'px');pcard.style.setProperty('--oy',(sy-r.top)+'px');
+    pcard.style.animation='none';void pcard.offsetWidth;pcard.style.animation='';
+    try{if(navigator.vibrate)navigator.vibrate(12)}catch(e){}
+  }
+  function close(){
+    if(!open)return;open=false;
+    peek.classList.add('out');
+    outTo=setTimeout(function(){peek.hidden=true;peek.classList.remove('out')},160);
+  }
+  pager.addEventListener('pointerdown',function(e){
+    var ex=e.target.closest('.ex');if(!ex||e.button>0)return;
+    target=ex;sx=e.clientX;sy=e.clientY;ex.classList.add('holding');
+    timer=setTimeout(function(){timer=null;show()},380);
+  });
+  document.addEventListener('pointermove',function(e){
+    if(timer&&(Math.abs(e.clientX-sx)>8||Math.abs(e.clientY-sy)>8))cancel();
+  },{passive:true});
+  function end(){cancel();close()}
+  document.addEventListener('pointerup',end);
+  document.addEventListener('pointercancel',function(){if(!open)cancel()});
+  document.addEventListener('touchend',end,{passive:true});
+  document.addEventListener('touchmove',function(e){if(open)e.preventDefault()},{passive:false});
+  pager.addEventListener('contextmenu',function(e){if(e.target.closest('.ex'))e.preventDefault()});
+  peek.addEventListener('click',end);
+})();
+</script>
+
+</body>
+</html>
